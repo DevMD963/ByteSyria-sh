@@ -9,7 +9,7 @@ colorize() {
 }
 
 install_nmap_if_not_exist() {
-    if ! command -v nmap &> /dev/null; then
+    if ! command -v nmap &> /usr/bin/nmap; then
         colorize 3 "nmap is not installed. Installing...\n"
         sudo apt-get update
         sudo apt-get install nmap -y
@@ -18,7 +18,7 @@ install_nmap_if_not_exist() {
 
 check_open_ports() {
     colorize 4 "Checking open ports using nmap...\n"
-    nmap -p 1-65535 localhost
+    nmap -F --open localhost | awk '/^[0-9]/ {print $1"/"$3}' | tail -n +3 | column -t
 }
 
 display_server_info() {
@@ -41,7 +41,23 @@ calculate_server_usage() {
 clear
 
 colorize 2 "Byte Syria Security program\n\n"
-install_nmap_if_not_exist
-display_server_info
-calculate_server_usage
-check_open_ports
+
+read -p "Do you want to update your system? (Y/N): " update_choice
+if [ "$update_choice" = "Y" ] || [ "$update_choice" = "y" ]; then
+    colorize 3 "Updating your system...\n"
+    sudo apt-get update
+    sudo apt-get upgrade -y
+fi
+
+read -p "Do you want to perform a fast security check? (Y/N): " security_check_choice
+if [ "$security_check_choice" = "Y" ] || [ "$security_check_choice" = "y" ]; then
+    install_nmap_if_not_exist
+    clear
+    display_server_info
+    check_open_ports
+    calculate_server_usage
+else
+    clear
+    display_server_info
+    calculate_server_usage
+fi
